@@ -1,0 +1,63 @@
+Net_0: 
+    nodes: 
+        - ['Src', 'RS']
+        - ['Int', 'FS']
+        - ['Tgt', 'RS']
+    edges: 
+        - [0,AMPA,AMPA]
+        - [0,0,GABA]
+        - [0,0,0]
+Net_1: 
+    nodes: 
+        - ['Src_1', 'RS']
+        - ['Src_2', 'RS']
+        - ['Int', 'FS']
+        - ['Tgt', 'RS']
+    edges: 
+        - [0,0,AMPA,AMPA]
+        - [0,0,AMPA,AMPA]
+        - [0,0,0,GABA]
+        - [0,0,0,0]
+Net_2: 
+    nodes: 
+        - ['Src_1', 'RS']
+        - ['Src_2', 'RS']
+        - ['Int_1', 'FS']
+        - ['Int_2', 'FS']
+        - ['Tgt', 'RS']
+    edges: 
+        - [0,0,AMPA,0,AMPA]
+        - [0,0,0,AMPA,AMPA]
+        - [0,0,0,ELEC,GABA]
+        - [0,0,ELEC,0,GABA]
+        - [0,0,0,0,0]
+Net_3: 
+    nodes: 
+        - ['Src_1', 'RS']
+        - ['Src_2', 'RS']
+        - ['Int_1', 'FS']
+        - ['Int_2', 'FS']
+        - ['Tgt', 'RS']
+    edges: 
+        - [0,0,AMPA,0,AMPA]
+        - [0,0,0,AMPA,AMPA]
+        - [0,0,0,ELEC-GABA,GABA]
+        - [0,0,ELEC-GABA,0,GABA]
+        - [0,0,0,0,0]
+Net_4: 
+    nodes: 
+        - ['Src_1', 'RS']
+        - ['Src_2', 'RS']
+        - ['Int_1', 'FS']
+        - ['Int_2', 'FS']
+        - ['Tgt_1', 'RS']
+        - ['Tgt_2', 'RS']
+        - ['Rdo', 'RS']
+    edges: 
+        - [0,0,AMPA,0,AMPA,0,0]
+        - [0,0,0,AMPA,0,AMPA,0]
+        - [0,0,0,ELEC-GABA,GABA,0,0]
+        - [0,0,ELEC-GABA,0,0,GABA,0]
+        - [0,0,0,0,0,0,AMPA]
+        - [0,0,0,0,0,0,AMPA]
+        - [0,0,0,0,0,0,0]

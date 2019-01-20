@@ -71,7 +71,7 @@ psp_anly = struct(  'iw', struct('dat', iw_psp, 'name', 'Integration window', 'u
 clear iw_psp peak_psp auc_psp;
 
 %% Load layout
-file_name  = 'Fig4_layout_v2.svg';
+file_name  = 'Fig4_layout_official.svg';
 [layout_map, dimensions] = return_figure_layout(file_name);
 width = dimensions.width;
 height = dimensions.height;
@@ -79,8 +79,9 @@ unit = dimensions.unit;
 conv_factor = double(unitConversionFactor(str2symunit(unit), str2symunit('cm')));
 layout_keys = layout_map.keys();
 figure;
-set(gcf, 'Units', 'centimeters', 'Position', [0, 0, width, height]*conv_factor);
-
+set(gcf, 'Units', 'centimeters', 'Position', [0, 0, width, height]*conv_factor, ...
+    'PaperUnits', 'centimeters','PaperPosition', [0, 0, width, height]*conv_factor,...
+    'PaperSize', [width, height]*conv_factor);
 %% Annotation and axes styles
 ann_style = {'LineStyle', 'none', 'HorizontalAlignment', 'left', ...
     'VerticalAlignment', 'top', 'FontSize', 15, 'FontWeight', 'bold'};
@@ -98,6 +99,7 @@ create_text = @(tag_name, string_, extra_style) annotation('textbox', 'Units', '
 create_fig = @(tag_name) axes('Units', 'normalized', ...
     'Position', layout_map(tag_name).normz_pos);
 
+gelec_cmap_factor = 0.85; 
 %% Fig 4A
 create_ann('ann_A', 'A');
 
@@ -115,10 +117,9 @@ psp_scale = 1;
 
 g_gabaint_2look4v = [1, 7];
 dt_inp_2look4v = [2, 4.4];
-tag_order = [1, 3;
-    2, 4];
+tag_order = [1, 3; 2, 4];
 g_elec2show = 1:2:length(g_elecint);
-cmap = parula(length(g_elec2show));
+cmap = parula(length(g_elec2show)) * gelec_cmap_factor;
 
 for m = 1:length(dt_inp_2look4v)
     loc_ = cell(1,length(len_var));
@@ -172,6 +173,9 @@ for m = 1:length(dt_inp_2look4v)
             '-k', 'LineWidth', 0.75);
         plot(ax_tgt, tscale_start*[1,1], pspscale_start+[0,psp_scale], ...
             '-k', 'LineWidth', 0.75);
+        
+        title(ax_tgt, ['\Deltat_{inp} = ' num2str(dt_inp_2look4) ' ms'],...
+        'fontweight', 'normal', 'fontsize', 10, 'visible', 'on', 'HorizontalAlignment', 'right');
     end
 end
 colormap(ax_tgt, cmap);
@@ -189,7 +193,7 @@ field2plt = {'iw', 'auc'};
 
 g_gabaint_2look4v = [1,3,5,7];
 
-cmap = parula(length(g_elecint));
+cmap = parula(length(g_elecint)) * gelec_cmap_factor;
 for m = 1:length(splt_tag)
     field_m = psp_anly.(field2plt{m});
     data2plt_m = field_m.dat;
@@ -215,7 +219,7 @@ for m = 1:length(splt_tag)
             data2plt_ij = data2plt_m(loc_{:});
             clr_ij = cmap(j,:);
             
-            plot(ax_lines, dt_inp, data2plt_ij, '-', 'Color', clr_ij, 'LineWidth', 1);
+            plot(ax_lines, dt_inp, data2plt_ij, '-', 'Color', clr_ij, 'LineWidth', 1.5);
         end
         xlim(ax_lines, [0, max(dt_inp)]);
         ylim(ax_lines, lim_y);
@@ -232,4 +236,4 @@ pos_clrbar = layout_map('colorbar_CD').normz_pos;
 set(clrbar, 'Box', 'off', 'LineWidth', 0.001,...
     'ticks', linspace(0,1,length(colorbar_show)), 'ticklabels', colorbar_show, ...
     'Position', pos_clrbar);
-title(clrbar, 'G_{elec} (nS)');
+title(clrbar, 'G_{elec} (nS)', 'fontsize', 10);

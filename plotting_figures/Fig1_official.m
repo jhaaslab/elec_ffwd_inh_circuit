@@ -44,7 +44,7 @@ for i = 1:data2save.num_dat
 end
 
 %% Load layout
-file_name  = 'Fig1_layout.svg';
+file_name  = 'Fig1_layout_official.svg';
 [layout_map, dimensions] = return_figure_layout(file_name);
 width = dimensions.width;
 height = dimensions.height;
@@ -52,7 +52,8 @@ unit = dimensions.unit;
 conv_factor = double(unitConversionFactor(str2symunit(unit), str2symunit('cm')));
 layout_keys = layout_map.keys();
 figure;
-set(gcf, 'Units', 'centimeters', 'Position', [0, 0, width, height]*conv_factor);
+set(gcf, 'Units', 'centimeters', 'Position', [0, 0, width, height]*conv_factor, ...
+    'PaperUnits', 'centimeters','PaperPosition', [0, 0, width, height]*conv_factor, 'PaperSize', [width, height]*conv_factor);
 
 %% Annotation and axes styles
 ann_style = {'LineStyle', 'none', 'HorizontalAlignment', 'center', ...
@@ -126,7 +127,7 @@ clrbar = colorbar(gca); colormap(gca, cmap); caxis([min(y_vec), max(y_vec)]);
 set(clrbar, 'fontsize', 8, 'Box', 'off', 'LineWidth', 0.001);
 ylabel(clrbar, labels_.y, 'fontsize', 10);
 set(gca, 'xcolor', 'none', 'ycolor', 'none', 'visible', 'off')
-title(gca, {'Dependance on G_{GABA\rightarrowTgt}'}, ...
+title(gca, 'PSP of Tgt', ...
     'fontweight', 'normal', 'fontsize', title_size, 'visible', 'on');
 %% Fig 1D
 create_ann('ann_D', 'D');
@@ -156,7 +157,7 @@ clrbar = colorbar(gca); colormap(gca,cmap); caxis([min(x_vec), max(x_vec)]);
 set(clrbar, 'fontsize', 8, 'Box', 'off', 'LineWidth', 0.001);
 ylabel(clrbar, labels_.x, 'fontsize', 10);
 set(gca, 'xcolor', 'none', 'ycolor', 'none', 'visible', 'off')
-title(gca, 'Dependence on G_{AMPA\rightarrowTgt}', ...
+title(gca, 'PSP of Tgt', ...
     'fontweight', 'normal', 'fontsize', title_size, 'visible', 'on');
 %% Fig 1E-G
 data2plt = zeros(size(xz));

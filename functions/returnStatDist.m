@@ -1,4 +1,4 @@
-function [stat_dist, x_axis_actual, y_axis_actual] = returnStatDist(data_folder, filename_prefix, cell_pref)
+function [stat_dist, x_axis_actual, y_axis_actual] = returnStatDist(data_folder, filename_prefix, cell_pref, thr_lat)
 
 data_file_pref = dir(fullfile(data_folder, filename_prefix));
 data_file_pref = {data_file_pref.name};
@@ -21,6 +21,7 @@ len_var = cellfun(@(x) length(x), value_var, 'UniformOutput', true);
 
 cell_names = cellstr(data2save.cell_names)';
 num_pref = length(cell_pref);
+num_unit = length(cell_names)/num_pref;
 idx_pref  = struct();
 for i = 1:num_pref
     idx_pref.(cell_pref{i}) = find(contains(cell_names, cell_pref{i}));
@@ -85,7 +86,7 @@ for i = 1:tot_combos
     
     binw = f_binw(t_init_std(combo_i{1}));
     n_bins = ceil(abs(diff(edge_lim))/binw);
-    Src_dat = [raw_data{:,combo_i{:},Src_loc}]; %#ok<FNDSB>
+    Src_dat = [raw_data{:,combo_i{:},Src_loc}]; 
     [ptsh_src, centers_src] = return_histogram(Src_dat, n_trials, n_bins, edge_lim, smw);
     mean_src = mean(Src_dat);
     std_src = std(Src_dat);
@@ -104,19 +105,23 @@ for i = 1:tot_combos
         normz_centers = centers_comboij-mean_src;
         peak_normz_ptsh = max(normz_ptsh);
         t_peak = normz_centers(find(normz_ptsh == peak_normz_ptsh,1));
-        t_5percent_srcpeak = max(normz_centers(normz_ptsh < 0.05 & normz_centers < t_peak));
-        t_10percent_srcpeak = max(normz_centers(normz_ptsh < 0.10 & normz_centers < t_peak));
+
+        lat_thr = latency_with_threshold(thr_lat, normz_ptsh, normz_centers, t_peak); 
         
         stat_dist(combo_i{:},j).ptsh = normz_ptsh;
         stat_dist(combo_i{:},j).centers = normz_centers;
         stat_dist(combo_i{:},j).peak = peak_normz_ptsh;
         stat_dist(combo_i{:},j).auc = trapz(centers_comboij, ptsh_comboij)/auc_ptsh_src;
         
-        %% all latencies are normalized to src_stddev
-        stat_dist(combo_i{:},j).lat = normz_centers(find(normz_ptsh>0,1))/std_src;
-        stat_dist(combo_i{:},j).lat5per = t_5percent_srcpeak/std_src;
-        stat_dist(combo_i{:},j).lat10per = t_10percent_srcpeak/std_src;
+        stat_dist(combo_i{:},j).t_peak = t_peak;        
+        stat_dist(combo_i{:},j).lat_thr = lat_thr;
+        stat_dist(combo_i{:},j).pernspk = 100*length(find(~isnan(dat_combo_ij)))/(n_trials * num_unit);
     end
+    src_lat = stat_dist(combo_i{:},Src_loc).lat_thr;
+    for j = 1:sizeRD(end)
+        stat_dist(combo_i{:},j).lat2Src = stat_dist(combo_i{:},j).lat_thr - src_lat;
+    end
+        
     tinp_dist{combo_i{:}} = [t_inp{:,combo_i{:}}];
 end
 
@@ -134,4 +139,13 @@ y_axis_actual = struct(...
     'vec', g_elec_vec, ...
     'show', f_vec2show(g_elec_vec) );
 
+end
+
+function latency = latency_with_threshold(thr_lat, ptsh, centers, t_peak)
+b4_loc =  find(ptsh <= thr_lat & centers < t_peak, 1, 'last' );
+af_loc =  find(ptsh >= thr_lat & centers < t_peak, 1, 'first');
+x_a = centers(af_loc); y_a = ptsh(af_loc);
+x_b = centers(b4_loc); y_b = ptsh(b4_loc);
+x_intersection = (thr_lat*(x_a - x_b) - y_b*x_a + y_a*x_b)/(y_a - y_b);
+latency = x_intersection;
 end

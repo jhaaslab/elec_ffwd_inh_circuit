@@ -31,7 +31,7 @@ for i = 1:length(layout_obj)
     for j = 1:length(layout_params)
         normz_j = normz_fun{j};
         val_j = normz_j(str2double(return_atrr_val(ly_i, layout_params{j}))); 
-        tmp_struct.(layout_params{j}) = val_j; str2double(return_atrr_val(ly_i, layout_params{j}));
+        tmp_struct.(layout_params{j}) = val_j;
     end
     tmp_struct.y = tmp_struct.y - tmp_struct.height; 
     tmp_struct.normz_pos = [tmp_struct.x, tmp_struct.y, tmp_struct.width, tmp_struct.height];

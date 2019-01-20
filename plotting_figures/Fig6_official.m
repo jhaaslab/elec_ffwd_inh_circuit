@@ -30,17 +30,19 @@ if strcmp(choice, 'loadfirst')
         '../data/extended_net_withGJandGABA/', 'extendedNet_withGJandGABA=5nS_*.mat';};
     num_cases = size(folder_prefix_pairs, 1);
     stat_dist = cell(1,num_cases);
+    
+    thr_lat = 0.10; % of Src 
     cell_pref = {'Src', 'Int', 'Tgt'};
     for i = 1 : num_cases
         data_folder = folder_prefix_pairs{i,1};
         file_prefix = folder_prefix_pairs{i,2};
-        [stat_dist_i, x_axis_actual, y_axis_actual] = returnStatDist(data_folder, file_prefix, cell_pref);
+        [stat_dist_i, x_axis_actual, y_axis_actual] = returnStatDist(data_folder, file_prefix, cell_pref, thr_lat);
         stat_dist{i} = stat_dist_i;
     end
 end
 
 %% Load layout
-file_name  = 'Fig6_layout_v4.svg';
+file_name  = 'Fig6_layout_official.svg';
 [layout_map, dimensions] = return_figure_layout(file_name);
 width = dimensions.width;
 height = dimensions.height;
@@ -67,7 +69,7 @@ create_text = @(tag_name, string_, extra_style) annotation('textbox', 'Units', '
 
 create_fig = @(tag_name) axes('Units', 'normalized', ...
     'Position', layout_map(tag_name).normz_pos);
-
+gelec_cmap_factor = 0.8; 
 %% Value vectors 
 x_axis_actual.name = '\sigma_{inp}';
 x_axis_actual.unit = 'ms'; 
@@ -98,7 +100,13 @@ std_tinit2plt = [1, 3, 5, 10];
 loc_cell = find(strcmp(cell_pref, cell2plt));
 
 nline_plt = length(g_elec_vec); 
-cmap = parula(nline_plt); 
+cmap = parula(nline_plt) * gelec_cmap_factor; 
+
+value_demo = struct(); 
+value_demo.C = zeros(length(g_gaba_int_vec), length(std_tinit2plt), nline_plt); 
+value_demo.D = zeros(length(g_gaba_int_vec), length(std_tinit2plt), nline_plt); 
+value_demo.E = zeros(length(g_gaba_int_vec), length(std_tinit2plt), nline_plt); 
+
 
 for i = 1:length(std_tinit2plt) 
     loc_i = find(abs(t_init_std - std_tinit2plt(i)) <eps);
@@ -111,7 +119,13 @@ for i = 1:length(std_tinit2plt)
         for k = 1:nline_plt
             stat_ijk = stat_dist{j}(loc_i,k,loc_cell);
             plot(ax_ij, stat_ijk.centers, stat_ijk.ptsh, ...
-                'color', cmap(k,:), 'linewidth', 1);             
+                'color', cmap(k,:), 'linewidth', 1.5);    
+            
+            %% for figure 6C&D            
+            value_demo.C(j,i,k) = stat_ijk.lat2Src;
+            value_demo.D(j,i,k) = stat_ijk.pernspk;
+            value_demo.E(j,i,k) = stat_ijk.mean;
+       
         end
         xlim(ax_ij, f_limx(std_tinit2plt(i))); 
         ylim(ax_ij, f_limy([]));
@@ -144,3 +158,59 @@ set(clrbar, 'box', 'off', 'linewidth', 0.001, 'position', pos_clrbar, 'fontsize'
 caxis(ax_ij, [min(y_axis_actual.vec), max(y_axis_actual.vec)]);
 title(clrbar, [y_axis_actual.name ' (' y_axis_actual.unit ')'],...
     'fontsize', 14);
+%% Fig 6C&D
+lim_x = [min(g_elec_vec), max(g_elec_vec)] + [-1,1]*0.2; 
+lim_y = @(ly) ly + 0.15 * abs(diff(ly)) * [-1,1];
+x_label_name = [y_axis_actual.name, ' (', y_axis_actual.unit, ')']; 
+num_lines = length(std_tinit2plt); 
+
+reshape_3dtovec = @(mat) reshape(mat, [1,length(g_elec_vec)]); 
+loc_gabaint2plt = [1,length(g_gaba_int_vec)]; 
+linestyle_gabaint2plt = {':', '-'};
+cmap = [0,0,0;
+        190,190,190; 
+        95,200,211;
+        200,0,0]/255; 
+plot_props = struct(); 
+plot_props.C = struct('title', 'Tgt latency', 'ylabel', 'ms'); 
+plot_props.D = struct('title', '% Tgt spikes', 'ylabel', '%'); 
+plot_props.E = struct('title', 'Mean Tgt spike time', 'ylabel', 'ms'); 
+ 
+for tag_ = fieldnames(plot_props)'
+    tag = tag_{:}; 
+    create_ann(['ann_' tag], tag); 
+    ax = create_fig(['fig_' tag]); 
+    hold(ax, 'on'); 
+    set(ax,'fontsize', 10, 'ticklength', [0.02,0.02]);
+    value_ax = value_demo.(tag); 
+    for i = 1:num_lines
+        clr_i = cmap(i,:); 
+        for j = 1:length(loc_gabaint2plt)   
+            loc_j = loc_gabaint2plt(j);
+            lst_j = linestyle_gabaint2plt{j};
+            val_ij = reshape_3dtovec(value_ax(loc_j,i,:));
+            plot(ax, g_elec_vec, val_ij, ...
+                lst_j, 'Color', clr_i, 'LineWidth', 2);
+        end
+    end
+        
+    if ~strcmp(tag, 'D')
+        xlabel(ax, x_label_name, 'fontsize', 12);
+    else
+        set(ax, 'xtick', '');
+    end
+    xlim(ax,lim_x);
+    ylabel(ax, plot_props.(tag).ylabel, 'fontsize', 12); 
+    current_ylim = ylim(ax); 
+    ylim(ax, lim_y(current_ylim)); 
+    title(ax, plot_props.(tag).title, 'fontsize', 14, 'fontweight', 'normal');
+
+end
+    
+colormap(ax, cmap);
+clrbar = colorbar(ax);
+pos_clrbar = layout_map('colorbar_CDE').normz_pos;
+set(clrbar, 'box', 'off', 'linewidth', 0.001, 'position', pos_clrbar, ...
+    'fontsize', 10, 'ticks', linspace(0,1,num_lines), 'ticklabels', std_tinit2plt); 
+title(clrbar, x_axis_actual.name, 'fontsize', 12);
+

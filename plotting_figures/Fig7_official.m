@@ -31,16 +31,18 @@ if strcmp(choice, 'loadfirst')
         '../data/extended_net_withGJandGABA/', 'extendedNet_withGJandGABA=5nS_*.mat'};
     num_cases = size(folder_prefix_pairs, 1);
     stat_dist = cell(1,num_cases);
+        
+    thr_lat = 0.10; % of Src 
     cell_pref = {'Src', 'Int', 'Tgt'};
     for i = 1 : num_cases
         data_folder = folder_prefix_pairs{i,1};
         file_prefix = folder_prefix_pairs{i,2};
-        [stat_dist_i, x_axis_actual, y_axis_actual] = returnStatDist(data_folder, file_prefix, cell_pref);
+        [stat_dist_i, x_axis_actual, y_axis_actual] = returnStatDist(data_folder, file_prefix, cell_pref, thr_lat);
         stat_dist{i} = stat_dist_i;
     end
 end
 %% Load layout
-file_name  = 'Fig7_layout_v2.svg';
+file_name  = 'Fig7_layout_official.svg';
 [layout_map, dimensions] = return_figure_layout(file_name);
 width = dimensions.width;
 height = dimensions.height;
@@ -49,7 +51,8 @@ conv_factor = double(unitConversionFactor(str2symunit(unit), str2symunit('cm')))
 layout_keys = layout_map.keys();
 figure;
 set(gcf, 'Units', 'centimeters', 'Position', [0, 0, width, height]*conv_factor, ...
-    'PaperUnits', 'centimeters','PaperPosition', [0, 0, width, height]*conv_factor, 'PaperSize', [width, height]*conv_factor);
+    'PaperUnits', 'centimeters','PaperPosition', [0, 0, width, height]*conv_factor, ...
+    'PaperSize', [width, height]*conv_factor);
 
 %% Annotation and axes styles
 ann_style = {'LineStyle', 'none', 'HorizontalAlignment', 'left', ...
@@ -81,8 +84,8 @@ color_options = {
     [170,68,0]/255;
     };
 
-cmap = createmap(color_options, 300, 0.05, 0.95);
-pos_white = find(cmap(:,1)>0.98&cmap(:,2)>0.98&cmap(:,3)>0.98);
+cmap = createmap(color_options, 500, 0.2, 0.95);
+pos_white = find(cmap(:,1)>0.99&cmap(:,2)>0.99&cmap(:,3)>0.99);
 cmap(pos_white,:) = 0.99*cmap(pos_white,:);
 %% Plot Fig 7 
 flip_xy_axis = true;
@@ -95,7 +98,7 @@ create_text('text_A', 'Spike time distribution of Int', title_textstyle);
 create_ann('ann_B', 'B');
 create_text('text_B', 'Spike time distribution of Tgt', title_textstyle);
 
-stat_fields2plt = {'mean', 'std', 'peak', 'auc', 'lat10per'};
+stat_fields2plt = {'mean', 'std', 'peak', 'auc', 'lat2Src'};
 right_lbl_names = struct(...
     'mean', struct('name', 'Mean spike time', 'unit', 'gain (ms)', ...
         'caxis_lim', struct('Int',[-6,2], 'Tgt', [-2.5,1.5])), ...
@@ -105,10 +108,8 @@ right_lbl_names = struct(...
         'caxis_lim', struct('Int',[-0.5,1.5], 'Tgt', [-1,0])), ...
     'auc', struct('name', 'Total response', 'unit', 'gain (norm)',...
         'caxis_lim',struct('Int',[-0.8,0.2], 'Tgt', [-0.4,0])), ...
-    'lat5per', struct('name', 'Latency of 5% Peak_{Src}', 'unit', 'gain (norm)',...
-        'caxis_lim',struct('Int',[-1,1], 'Tgt', [-2,2])), ...
-    'lat10per', struct('name', 'Relative latency', 'unit', 'gain (norm)',...
-        'caxis_lim',struct('Int',[0,1.6], 'Tgt', [-1.25,0]))...
+    'lat2Src', struct('name', 'Latency', 'unit', 'gain (ms)', ...
+        'caxis_lim', struct('Int', [0,20], 'Tgt', [-1.5,0]))...
     );
 if flip_xy_axis
     x_axis_ = y_axis_actual;
@@ -162,8 +163,8 @@ for i = 1:length(stat_fields2plt)
                 clrbar = colorbar(ax_pixels);
                 ylabel(clrbar, unit_i, 'fontsize', 12);
                 set(clrbar, 'box', 'off');                
+                
             end
-            
             %% conditional labeling
             if i == 1 && m == num_cases
                 set(ax_pixels, 'xtick', x_axis_.show([1,end]), 'xticklabel', x_axis_.show([1,end]));
@@ -177,7 +178,6 @@ for i = 1:length(stat_fields2plt)
                 title(ax_pixels, name_i, 'fontsize', 12, 'fontweight', 'normal');
             end
             set(ax_pixels, 'linewidth', 1.5, 'box', 'on');
-
         end
     end
 end
